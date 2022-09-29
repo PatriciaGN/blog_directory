@@ -90,19 +90,21 @@ If you can answer YES to the two questions, you'll probably have to implement a 
 -- Create the table without the foreign key first.
 CREATE TABLE posts (
   id SERIAL PRIMARY KEY,
-  name text,
+  title text,
+  post_content text
 );
 
 -- Then the table with the foreign key first.
-CREATE TABLE albums (
+CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
-  title text,
-  release_year int,
+  comment_content text,
+  author_name text,
 -- The foreign key name is always {other_table_singular}_id
-  artist_id int,
-  constraint fk_artist foreign key(artist_id)
-    references artists(id)
+  post_id int,
+  constraint fk_post foreign key(post_id)
+    references posts(id)
     on delete cascade
 );
 5. Create the tables.
-psql -h 127.0.0.1 database_name < albums_table.sql
+psql -h 127.0.0.1 blog_directory < posts_table.sql
+psql -h 127.0.0.1 blog_directory < comments_table.sql
