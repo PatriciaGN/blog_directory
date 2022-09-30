@@ -96,16 +96,16 @@ class PostRepository
   # No arguments
   def all
     # Executes the SQL query:
-    # SELECT id, name, cohort_name FROM users;
+    # SELECT id, title, post_content FROM posts;
 
-    # Returns an array of User objects.
+    # Returns an array of Post objects.
   end
 
   # Gets a single record by its ID
   # One argument: the id (number)
   def find(id)
     # Executes the SQL query:
-    # SELECT id, title, post_contents FROM posts WHERE id = $1;
+    # SELECT id, comment_content, author_name, post_id FROM comments WHERE id = $1;
 
     # Returns a single User object.
   end
@@ -115,22 +115,57 @@ class PostRepository
   # def create(user)
      # Insert a new user record
      # Takes a User object in argument
-     # Executes the SQL query: "INSERT INTO users (username, email_address) VALUES( $1, $2);"
+     # Executes the SQL query: "INSERT INTO posts (title, post_content) VALUES( $1, $2);"
      # Doesn't return anything (only creates the record)
   # end
 
   # def update(user)
     # Updates an user record
     # Takes a User objecty (with the updated fields)
-    # Executes the SQL: "UPDATE users SET username = $1, email_account = $2, id = $3;"
+    # Executes the SQL: "UPDATE posts SET title = $1, post_contet = $2, id = $3;"
     # Returns nothing(only updates the record)
   # end
 
   # def delete(user)
       # Deletes an user record given its id
-      # Executes the SQL: "DELETE FROM users WHERE id = $1;"
+      # Executes the SQL: "DELETE FROM posts WHERE id = $1;"
       #Returns nothing
   # end
+
+  # find_with_post(id)
+    def find_with_students(id)
+    sql = 'SELECT posts.id,
+              posts.title,
+              posts.post_content 
+              comments.id AS comment_id,
+              comments.comment_content,
+              comments.author_name,
+              comment.post_id
+           FROM posts
+           JOIN comments ON comments.post_id = posts.id
+           WHERE posts.id = $1;'
+
+  
+
+    sql_params = [id]
+    result = DatabaseConnection.exec_params(sql, sql_params)
+
+    post = Post.new
+    post.id = result.first['id']
+    post.title = result.first['title']
+    post.post_content = result.first['post_content']
+    
+    
+    result.each do |record|
+        comment = Comment.new
+        comment.id = record['cohort_id']
+        comment.comment_content = record['comment_content']
+        comment.post_id = record['post']
+
+        post.comment << comment
+    end
+    return post
+  end
 end
 
 6. Write Test Examples
@@ -141,7 +176,7 @@ These examples will later be encoded as RSpec tests.
 # EXAMPLES
 
 # 1
-# Get all posts
+# Get all comments
 
 repo = UsersRepository.new
 
@@ -200,6 +235,19 @@ updated_user.email_address = "updated@email.com"
 
 user.username #=> "updated username" 
 user.email_address #=> "updated@email.com"  
+
+
+
+ describe "#find" do
+        it "finds a cohort with related students" do
+            repo = CohortRepository.new
+            cohort = repo.find_with_students(1)
+
+            expect(cohort.title).to eq("September 22")
+            expect(cohort.students.length).to eq 2
+        end
+    end
+
 
 7. Reload the SQL seeds before each test run
 Running the SQL code present in the seed file will empty the table and re-insert the seed data.
